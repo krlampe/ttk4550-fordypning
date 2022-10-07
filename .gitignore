@@ -1,3 +1,11 @@
+# Executables
+ode-parser
+
+# Lex and yacc generated files
+*.lex.c
+*.tab.c
+*.tab.h
+
 # Prerequisites
 *.d
 

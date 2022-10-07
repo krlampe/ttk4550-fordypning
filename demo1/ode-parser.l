@@ -1,41 +1,39 @@
 %option noyywrap nodefault noinput nounput
 
+%{
+#include "ode-parser.tab.h"
+int yyerror(char *s);
+%}
+
 /* float exponent */
 EXP ([Ee][-+]?[0-9]+)
 
 %%
  /* single character operators */
-"=" { puts("EQUAL"); }
-"+" { puts("PLUS"); }
-"-" { puts("MINUS"); }
-"*" { puts("MULTIPLY"); }
-"/" { puts("DIVIDE"); }
-"^" { puts("POWER"); }
-"(" { puts("OP"); }
-")" { puts("CP"); }
-"|" { puts("ABS"); }
+"=" |
+"+" |
+"-" |
+"*" |
+"/" |
+"(" |
+")" { return yytext[0]; }
+
+ /* prime mark for derivatives */
+"'" { return D; }
 
  /* reserved variable  */
-"t" { puts("Independent variable t"); }
-
- /* built-in functions */
-"sqrt"  { puts("BUILT-IN sqrt"); }
-"exp"   { puts("BUILT-IN exp"); }
-"log"   { puts("BUILT-IN log"); }
-"sin"   { puts("BUILT-IN sin"); }
-"cos"   { puts("BUILT-IN cos"); }
+"t" { strcpy(yylval.name, yytext); return T; }
 
  /* symbols */
-[a-zA-Z][a-zA-Z0-9]* { printf("SYMBOL %s\n", yytext); }
-[a-zA-Z][a-zA-Z0-9]*"'" { printf("DERIVATIVE %s\n", yytext); }
+[a-zA-Z][a-zA-Z0-9]* { strcpy(yylval.name, yytext); return FUNCTION; }
 
  /* decimal numbers */
 [0-9]+"."[0-9]*{EXP}? |
-"."?[0-9]+{EXP}? { printf("NUMBER %s\n", yytext); }
+"."?[0-9]+{EXP}? { yylval.number = atof(yytext); return COEFFICIENT; }
 
 "//".*  { /* ignore comments */ }
 
-\n    { puts("NEWLINE"); }
+\n    { return EOL; }
 
 \\\n  { /* ignore line continuation */ }
 
@@ -43,7 +41,3 @@ EXP ([Ee][-+]?[0-9]+)
 
 .	{ printf("Unknown character %c\n", *yytext); }
 %%
-
-int main() {
-  return yylex();
-}
