@@ -16,26 +16,29 @@ int yyerror(char *s);
 %token D
 %token EOL
 
+%left '+' '-'
+%left '*' '/'
+%nonassoc UMINUS
+
 %%
-equation: derivative '=' exp EOL { puts("Successfully parsed equation"); exit(0); } ;
+eqlist: /* nothing */
+| eqlist equation EOL { puts("Successfully parsed equation"); }
+| eqlist EOL          {} /* blank line or a comment */
+;
+
+equation: derivative '=' exp {} ;
 
 derivative: FUNCTION D { printf("Derivative: %s'\n", $1); } ;
 
-exp: term {}
-| exp '+' term { puts("Add"); }
-| exp '-' term { puts("Subtract"); }
-;
-
-term: factor {}
-| term '*' factor { puts("Multiply"); }
-| term '/' factor { puts("Divide"); }
-;
-
-factor: COEFFICIENT { printf("Factor: %g\n", $1); }
-| T { printf("Factor: independent variable %s\n", $1); }
-| FUNCTION { printf("Factor: %s\n", $1); }
-| '(' exp ')' { puts("Parenthesis"); }
-| '-' factor { puts("Unary minus"); }
+exp: exp '+' exp          { puts("Add"); }
+   | exp '-' exp          { puts("Subtract"); }
+   | exp '*' exp          { puts("Multiply"); }
+   | exp '/' exp          { puts("Divide"); }
+   | '(' exp ')'          { puts("Parenthesis"); }
+   | '-' exp %prec UMINUS { puts("Unary minus"); }
+   | FUNCTION             { printf("Function %s\n", $1); }
+   | COEFFICIENT          { printf("Coefficient %g\n", $1); }
+   | T                    { printf("Independent variable %s\n", $1); }
 ;
 %%
 
