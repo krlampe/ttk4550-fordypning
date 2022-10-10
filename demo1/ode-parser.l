@@ -2,7 +2,6 @@
 
 %{
 #include "ode-parser.tab.h"
-int yyerror(char *s);
 %}
 
 /* float exponent */
@@ -15,6 +14,8 @@ EXP ([Ee][-+]?[0-9]+)
 "-" |
 "*" |
 "/" |
+"^" |
+"|" |
 "(" |
 ")" { return yytext[0]; }
 
@@ -23,6 +24,13 @@ EXP ([Ee][-+]?[0-9]+)
 
  /* reserved variable  */
 "t" { strcpy(yylval.name, yytext); return T; }
+
+ /* built-in functions */
+"sqrt" |
+"exp"  |
+"log"  |
+"sin"  |
+"cos"  { strcpy(yylval.name, yytext); return CALL; }
 
  /* symbols */
 [a-zA-Z][a-zA-Z0-9]* { strcpy(yylval.name, yytext); return FUNCTION; }
