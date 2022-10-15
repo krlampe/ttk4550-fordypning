@@ -6,10 +6,14 @@ ode-parser
 *.tab.c
 *.tab.h
 
+# VS Code
+.vscode
+
 # Prerequisites
 *.d
 
 # Object files
+build
 *.o
 *.ko
 *.obj
