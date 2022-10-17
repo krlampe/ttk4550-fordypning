@@ -40,61 +40,120 @@ ast_node *new_ast_numeral(char *name) {
   return (ast_node *)node;
 }
 
-void ast_traverse(ast_node *root) {
+char *ast_get_LHS(ast_node *root) {
+	return ((ast_symbol *)root->left)->name;
+}
+
+void ast_traverse_RHS(ast_node *root, FILE *out) {
 	switch(root->nodetype) {
 	case '=':
-		printf("Equation defining the derivative of %s:\n\t", ((ast_symbol *)root->left)->name);
-		ast_traverse(root->left);
-		printf(" %c ", root->nodetype);
-		ast_traverse(root->right);
+		/* Just traverse to the right */
+		ast_traverse(root->right, out);
 		break;
 	case '+':
 	case '-':
-		printf("%s","(");
-		ast_traverse(root->left);
-		printf(" %c ", root->nodetype); /* Spaces around */
-		ast_traverse(root->right);
-		printf("%s",")");
+		fprintf(out, "%s","(");
+		ast_traverse(root->left, out);
+		fprintf(out, " %c ", root->nodetype); // spaces around
+		ast_traverse(root->right, out);
+		fprintf(out, "%s",")");
 		break;
 	case '*':
 	case '/':
 	case '^':
-		printf("%s","(");
-		ast_traverse(root->left);
-		printf("%c", root->nodetype); /* Without spaces around */
-		ast_traverse(root->right);
-		printf("%s",")");
+		fprintf(out, "%s","(");
+		ast_traverse(root->left, out);
+		fprintf(out, "%c", root->nodetype); // without spaces around
+		ast_traverse(root->right, out);
+		fprintf(out, "%s",")");
 		break;
 	case 'M':
-		printf("%s","-");
-		ast_traverse(root->left);
+		fprintf(out, "%s","-");
+		ast_traverse(root->left, out);
 		break;
 	case 'A':
-		printf("%s","|");
-		ast_traverse(root->left);
-		printf("%s","|");
+		fprintf(out, "%s","|");
+		ast_traverse(root->left, out);
+		fprintf(out, "%s","|");
 		break;
 	case 'C':
-		ast_traverse(root->left);
-		printf("%s","(");
-		ast_traverse(root->right);
-		printf("%s",")");
+		ast_traverse(root->left, out);
+		fprintf(out, "%s","(");
+		ast_traverse(root->right, out);
+		fprintf(out, "%s",")");
 		break;
 
 	/* Leaf nodes */
 	case 'F':
 	case 'T':
 	case 'B':
-		printf("%s", ((ast_symbol *)root)->name);
-		break;
-	case 'D':
-		printf("(d/dt)%s", ((ast_symbol *)root)->name);
+		fprintf(out, "%s", ((ast_symbol *)root)->name);
 		break;
 	case 'N':
-		printf("%s", ((ast_number *)root)->numeral);
+		fprintf(out, "%s", ((ast_number *)root)->numeral);
+		break;
+
+	case 'D':
+	default:
+		fprintf(stderr, "Bad nodetype %c\n", root->nodetype);
+		break;
+	}
+}
+
+void ast_traverse(ast_node *root, FILE *out) {
+	switch(root->nodetype) {
+	case '=':
+		ast_traverse(root->left, out);
+		fprintf(out, " %c ", root->nodetype);
+		ast_traverse(root->right, out);
+		break;
+	case '+':
+	case '-':
+		fprintf(out, "%s","(");
+		ast_traverse(root->left, out);
+		fprintf(out, " %c ", root->nodetype); // spaces around
+		ast_traverse(root->right, out);
+		fprintf(out, "%s",")");
+		break;
+	case '*':
+	case '/':
+	case '^':
+		fprintf(out, "%s","(");
+		ast_traverse(root->left, out);
+		fprintf(out, "%c", root->nodetype); // without spaces around
+		ast_traverse(root->right, out);
+		fprintf(out, "%s",")");
+		break;
+	case 'M':
+		fprintf(out, "%s","-");
+		ast_traverse(root->left, out);
+		break;
+	case 'A':
+		fprintf(out, "%s","|");
+		ast_traverse(root->left, out);
+		fprintf(out, "%s","|");
+		break;
+	case 'C':
+		ast_traverse(root->left, out);
+		fprintf(out, "%s","(");
+		ast_traverse(root->right, out);
+		fprintf(out, "%s",")");
+		break;
+
+	/* Leaf nodes */
+	case 'F':
+	case 'T':
+	case 'B':
+		fprintf(out, "%s", ((ast_symbol *)root)->name);
+		break;
+	case 'D':
+		fprintf(out, "(d/dt)%s", ((ast_symbol *)root)->name);
+		break;
+	case 'N':
+		fprintf(out, "%s", ((ast_number *)root)->numeral);
 		break;
 	default:
-		printf("Bad nodetype %c\n", root->nodetype);
+		fprintf(stderr, "Bad nodetype %c\n", root->nodetype);
 		break;
 	}
 }
@@ -122,7 +181,7 @@ void ast_free(ast_node *root) {
 		free(((ast_number *)root)->numeral);
 		break;
 	default:
-		printf("Free bad nodetype %c\n", root->nodetype);
+		fprintf(stderr, "Free bad nodetype %c\n", root->nodetype);
 		break;
 	}
 	free(root);

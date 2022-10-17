@@ -1,10 +1,15 @@
 %{
 #include <stdio.h>
+#include <string.h>
 #include "ast.h"
+#include "matlab.h"
+
 int yylex(void);
 void yyerror(const char *msg);
 extern int yylineno;
 extern char *yytext;
+
+FILE *outputfile;
 %}
 
 %union {
@@ -29,7 +34,7 @@ extern char *yytext;
 %%
 eqlist:               { printf("%s","> "); } /* nothing */
 | eqlist EOL          { printf("%s","\n> "); } /* blank line or a comment */
-| eqlist equation EOL { ast_traverse($2); ast_free($2); printf("\n%s","> "); }
+| eqlist equation EOL { matlab_generate($2, outputfile); ast_free($2); printf("%s","> "); }
 ;
 
 equation: derivative '=' exp { $$ = new_ast_node('=', $1, $3); } ;
@@ -51,8 +56,18 @@ exp: exp '+' exp          { $$ = new_ast_node('+', $1, $3); }
    ;
 %%
 
-int main() {
-  return yyparse();
+int main(int argc, char *argv[]) {
+  char *outputfile_name = "ode_sim.m";
+  if (argc > 1) {
+    outputfile_name = argv[1];
+  }
+
+  outputfile = fopen(outputfile_name, "w");
+  // outputfile = stdout
+  yyparse();
+  puts("");
+  fclose(outputfile);
+  return 0;
 }
 
 void yyerror(const char *msg) {
