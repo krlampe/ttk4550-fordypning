@@ -1,5 +1,9 @@
 # Executables
 ode-parser
+sim-gen
+
+# Generated matlab files
+*.m
 
 # Lex and yacc generated files
 *.lex.c
