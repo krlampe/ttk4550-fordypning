@@ -1,12 +1,12 @@
 /*
-* Abstract syntax tree for ordinary differential equations.
+* Abstract syntax tree and symbol table for ordinary differential equations.
 */
 
 #ifndef AST_H
 #define AST_H
 
 /*
-* Node types
+* Node types of the Abstract syntax tree
 * Binary operators: + - * / ^
 * = - Equation
 * M - Unary minus
@@ -44,11 +44,24 @@ ast_node *new_ast_symbol(char nodetype, char *name);
 ast_node *new_ast_numeral(char *name);
 void ast_free(ast_node *root);
 
-/* Traverse the AST, writing to an output stream */
-void ast_traverse(ast_node *root, FILE *out);
-void ast_traverse_RHS(ast_node *root, FILE *out);
+/* Traverse an AST, writing to an output stream */
+void ast_print(ast_node *root, FILE *out);
 
-/* Returns a pointer to the name on the LHS */
-char *ast_get_LHS(ast_node *root);
+/* Symbol table */
+typedef struct {
+  int index;
+  char *name;
+  ast_node *ast_root;
+} symbol;
+
+extern symbol symbol_table[];
+
+int symbol_table_get_length(void);
+void symbol_table_add(char *name, ast_node *ast_root);
+void symbol_table_free(void);
+void symbol_table_print(void);
+
+/* Return symbol pointer if it exists, NULL otherwise */
+symbol *symbol_table_lookup(char *name);
 
 #endif /* AST_H */

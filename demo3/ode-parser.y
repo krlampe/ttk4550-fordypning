@@ -6,6 +6,7 @@
 
 int yylex(void);
 void yyerror(const char *msg);
+extern FILE *yyin;
 extern int yylineno;
 extern char *yytext;
 
@@ -29,17 +30,17 @@ FILE *outputfile;
 %nonassoc UMINUS
 %right '^'
 
-%type <node> equation derivative exp
+%type <node> exp
 
 %%
-eqlist:               { printf("%s","> "); } /* nothing */
-| eqlist EOL          { printf("%s","\n> "); } /* blank line or a comment */
-| eqlist equation EOL { matlab_generate($2, outputfile); ast_free($2); printf("%s","> "); }
+eqlist:
+| eqlist EOL
+| eqlist FUNCTION D '=' exp { 
+                              struct ast_node *root = new_ast_node('=', new_ast_symbol('D', $2), $5);
+                              symbol_table_add($2, root);
+                              free($2);
+                            }
 ;
-
-equation: derivative '=' exp { $$ = new_ast_node('=', $1, $3); } ;
-
-derivative: FUNCTION D { $$ = new_ast_symbol('D', $1); free($1); } ;
 
 exp: exp '+' exp          { $$ = new_ast_node('+', $1, $3); }
    | exp '-' exp          { $$ = new_ast_node('-', $1, $3); }
@@ -57,16 +58,35 @@ exp: exp '+' exp          { $$ = new_ast_node('+', $1, $3); }
 %%
 
 int main(int argc, char *argv[]) {
-  char *outputfile_name = "ode_sim.m";
+  const char *inputfile_name = "ode.txt";
   if (argc > 1) {
-    outputfile_name = argv[1];
+    inputfile_name = argv[1];
+  }
+  yyin = fopen(inputfile_name, "r");
+  if(!yyin) {
+    perror(inputfile_name);
+    return 1;
   }
 
+  const char *outputfile_name = "ode_sim.m";
+  if (argc > 2) {
+    outputfile_name = argv[2];
+  }
   outputfile = fopen(outputfile_name, "w");
-  // outputfile = stdout
+  if(!outputfile) {
+    perror(outputfile_name);
+    return 1;
+  }
+
   yyparse();
-  puts("");
+
+  matlab_generate(outputfile);
+
+  symbol_table_free();
+
+  fclose(yyin);
   fclose(outputfile);
+
   return 0;
 }
 

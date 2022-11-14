@@ -2,6 +2,9 @@
 ode-parser
 sim-gen
 
+# Input file
+ode.txt
+
 # Generated matlab files
 *.m
 

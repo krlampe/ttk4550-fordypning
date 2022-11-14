@@ -35,10 +35,13 @@ $(BUILD_DIR):
 clean:
 	rm -rf $(BUILD_DIR) $(TARGET) *.tab.[ch] *.lex.c
 
+cleanup: clean
+	rm *.m
+
 rebuild: clean default
 
 run: $(TARGET)
 	./$<
 
-.PHONY: default clean rebuild run
+.PHONY: default clean cleanup rebuild run
 .SECONDARY:

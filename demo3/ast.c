@@ -3,10 +3,17 @@
 #include <string.h>
 #include "ast.h"
 
+/* From parser */
+void yyerror(const char *msg);
+
+#define SYMBOL_TABLE_MAX_LENGTH 1024
+symbol symbol_table[SYMBOL_TABLE_MAX_LENGTH];
+static int symbol_table_length = 0;
+
 ast_node *new_ast_node(char nodetype, ast_node *left, ast_node *right) {
   ast_node *node = malloc(sizeof *node);
-  if(node == NULL) {
-		fprintf(stderr, "Failed to allocate memory\n");
+  if(!node) {
+		perror("abort");
 		exit(1);
 	}
 
@@ -18,8 +25,8 @@ ast_node *new_ast_node(char nodetype, ast_node *left, ast_node *right) {
 
 ast_node *new_ast_symbol(char nodetype, char *name) {
   ast_symbol *node = malloc(sizeof *node);
-  if(node == NULL) {
-		fprintf(stderr, "Failed to allocate memory\n");
+  if(!node) {
+		perror("abort");
 		exit(1);
 	}
 
@@ -30,8 +37,8 @@ ast_node *new_ast_symbol(char nodetype, char *name) {
 
 ast_node *new_ast_numeral(char *name) {
   ast_number *node = malloc(sizeof *node);
-  if(node == NULL) {
-		fprintf(stderr, "Failed to allocate memory\n");
+  if(!node) {
+		perror("abort");
 		exit(1);
 	}
 
@@ -40,103 +47,43 @@ ast_node *new_ast_numeral(char *name) {
   return (ast_node *)node;
 }
 
-char *ast_get_LHS(ast_node *root) {
-	return ((ast_symbol *)root->left)->name;
-}
-
-void ast_traverse_RHS(ast_node *root, FILE *out) {
+void ast_print(ast_node *root, FILE *out) {
 	switch(root->nodetype) {
 	case '=':
-		/* Just traverse to the right */
-		ast_traverse(root->right, out);
-		break;
-	case '+':
-	case '-':
-		fprintf(out, "%s","(");
-		ast_traverse(root->left, out);
-		fprintf(out, " %c ", root->nodetype); // spaces around
-		ast_traverse(root->right, out);
-		fprintf(out, "%s",")");
-		break;
-	case '*':
-	case '/':
-	case '^':
-		fprintf(out, "%s","(");
-		ast_traverse(root->left, out);
-		fprintf(out, "%c", root->nodetype); // without spaces around
-		ast_traverse(root->right, out);
-		fprintf(out, "%s",")");
-		break;
-	case 'M':
-		fprintf(out, "%s","-");
-		ast_traverse(root->left, out);
-		break;
-	case 'A':
-		fprintf(out, "%s","|");
-		ast_traverse(root->left, out);
-		fprintf(out, "%s","|");
-		break;
-	case 'C':
-		ast_traverse(root->left, out);
-		fprintf(out, "%s","(");
-		ast_traverse(root->right, out);
-		fprintf(out, "%s",")");
-		break;
-
-	/* Leaf nodes */
-	case 'F':
-	case 'T':
-	case 'B':
-		fprintf(out, "%s", ((ast_symbol *)root)->name);
-		break;
-	case 'N':
-		fprintf(out, "%s", ((ast_number *)root)->numeral);
-		break;
-
-	case 'D':
-	default:
-		fprintf(stderr, "Bad nodetype %c\n", root->nodetype);
-		break;
-	}
-}
-
-void ast_traverse(ast_node *root, FILE *out) {
-	switch(root->nodetype) {
-	case '=':
-		ast_traverse(root->left, out);
+		ast_print(root->left, out);
 		fprintf(out, " %c ", root->nodetype);
-		ast_traverse(root->right, out);
+		ast_print(root->right, out);
 		break;
 	case '+':
 	case '-':
 		fprintf(out, "%s","(");
-		ast_traverse(root->left, out);
+		ast_print(root->left, out);
 		fprintf(out, " %c ", root->nodetype); // spaces around
-		ast_traverse(root->right, out);
+		ast_print(root->right, out);
 		fprintf(out, "%s",")");
 		break;
 	case '*':
 	case '/':
 	case '^':
 		fprintf(out, "%s","(");
-		ast_traverse(root->left, out);
+		ast_print(root->left, out);
 		fprintf(out, "%c", root->nodetype); // without spaces around
-		ast_traverse(root->right, out);
+		ast_print(root->right, out);
 		fprintf(out, "%s",")");
 		break;
 	case 'M':
 		fprintf(out, "%s","-");
-		ast_traverse(root->left, out);
+		ast_print(root->left, out);
 		break;
 	case 'A':
 		fprintf(out, "%s","|");
-		ast_traverse(root->left, out);
+		ast_print(root->left, out);
 		fprintf(out, "%s","|");
 		break;
 	case 'C':
-		ast_traverse(root->left, out);
+		ast_print(root->left, out);
 		fprintf(out, "%s","(");
-		ast_traverse(root->right, out);
+		ast_print(root->right, out);
 		fprintf(out, "%s",")");
 		break;
 
@@ -185,4 +132,54 @@ void ast_free(ast_node *root) {
 		break;
 	}
 	free(root);
+}
+
+
+void symbol_table_add(char *name, ast_node *ast_root) {
+  for (int i = 0; i < SYMBOL_TABLE_MAX_LENGTH; i++) {
+    symbol *sym = &symbol_table[i];
+    
+    if (sym->name && !strcmp(name, sym->name)) {
+  		yyerror("symbol defined twice");
+  		exit(1);
+		}
+
+    if (!sym->name) { // New entry
+			sym->index = i;
+      sym->name = strdup(name);
+      sym->ast_root = ast_root;
+			++symbol_table_length;
+			return;
+    }
+  }
+  yyerror("symbol table overflow");
+}
+
+int symbol_table_get_length(void) {
+	return symbol_table_length;
+}
+
+symbol *symbol_table_lookup(char *name) {
+  for (int i = 0; i < symbol_table_length; i++) {
+    symbol *sym = &symbol_table[i];
+    if (sym->name && !strcmp(name, sym->name)) return sym;
+  }
+	return NULL;
+}
+
+void symbol_table_free(void) {
+  for (int i = 0; i < symbol_table_length; i++) {
+		symbol *sym = &symbol_table[i];
+    if (!sym->name) return;
+    free(sym->name);
+    if (sym->ast_root->nodetype) ast_free(sym->ast_root);
+  }
+}
+
+void symbol_table_print(void) {
+  for (int i = 0; i < SYMBOL_TABLE_MAX_LENGTH; i++) {
+		symbol *sym = &symbol_table[i];
+    if (!sym->name) return;
+    puts(sym->name);
+  }
 }
