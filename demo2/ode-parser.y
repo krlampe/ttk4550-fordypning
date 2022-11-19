@@ -27,9 +27,9 @@ extern char *yytext;
 %type <node> equation derivative exp
 
 %%
-eqlist:               { printf("%s","> "); } /* nothing */
-| eqlist EOL          { printf("%s","\n> "); } /* blank line or a comment */
-| eqlist equation EOL { ast_traverse($2); ast_free($2); printf("\n%s","> "); }
+eqlist:           { printf("%s","> "); }
+| eqlist EOL      { printf("%s","\n> "); }
+| eqlist equation { ast_print($2); ast_free($2); }
 ;
 
 equation: derivative '=' exp { $$ = new_ast_node('=', $1, $3); } ;

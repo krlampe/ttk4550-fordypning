@@ -5,6 +5,8 @@
 #ifndef AST_H
 #define AST_H
 
+#include <stdio.h>
+
 /*
 * Node types of the Abstract syntax tree
 * Binary operators: + - * / ^

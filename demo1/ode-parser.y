@@ -22,12 +22,12 @@ int yyerror(char *s);
 %right '^'
 
 %%
-eqlist: /* nothing */
+eqlist:               /* nothing */
+| eqlist EOL          /* line break, empty line or a comment */
 | eqlist equation EOL { puts("Successfully parsed equation"); }
-| eqlist EOL          {} /* blank line or a comment */
 ;
 
-equation: derivative '=' exp {} ;
+equation: derivative '=' exp ;
 
 derivative: FUNCTION D { printf("Derivative: %s'\n", $1); } ;
 

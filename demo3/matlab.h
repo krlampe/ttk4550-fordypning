@@ -2,7 +2,6 @@
 #define MATLAB_H
 
 #include <stdio.h>
-#include "ast.h"
 
 /**
  * Generate a matlab simulator to the file out.

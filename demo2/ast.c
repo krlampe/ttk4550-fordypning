@@ -40,44 +40,44 @@ ast_node *new_ast_numeral(char *name) {
   return (ast_node *)node;
 }
 
-void ast_traverse(ast_node *root) {
+void ast_print(ast_node *root) {
 	switch(root->nodetype) {
 	case '=':
 		printf("Equation defining the derivative of %s:\n\t", ((ast_symbol *)root->left)->name);
-		ast_traverse(root->left);
+		ast_print(root->left);
 		printf(" %c ", root->nodetype);
-		ast_traverse(root->right);
+		ast_print(root->right);
 		break;
 	case '+':
 	case '-':
 		printf("%s","(");
-		ast_traverse(root->left);
+		ast_print(root->left);
 		printf(" %c ", root->nodetype); /* Spaces around */
-		ast_traverse(root->right);
+		ast_print(root->right);
 		printf("%s",")");
 		break;
 	case '*':
 	case '/':
 	case '^':
 		printf("%s","(");
-		ast_traverse(root->left);
+		ast_print(root->left);
 		printf("%c", root->nodetype); /* Without spaces around */
-		ast_traverse(root->right);
+		ast_print(root->right);
 		printf("%s",")");
 		break;
 	case 'M':
 		printf("%s","-");
-		ast_traverse(root->left);
+		ast_print(root->left);
 		break;
 	case 'A':
 		printf("%s","|");
-		ast_traverse(root->left);
+		ast_print(root->left);
 		printf("%s","|");
 		break;
 	case 'C':
-		ast_traverse(root->left);
+		ast_print(root->left);
 		printf("%s","(");
-		ast_traverse(root->right);
+		ast_print(root->right);
 		printf("%s",")");
 		break;
 

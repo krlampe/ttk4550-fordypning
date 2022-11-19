@@ -33,7 +33,7 @@ EXP ([Ee][-+]?[0-9]+)
 "cos"  { strcpy(yylval.name, yytext); return CALL; }
 
  /* symbols */
-[a-zA-Z][a-zA-Z0-9]* { strcpy(yylval.name, yytext); return FUNCTION; }
+[a-zA-Z_][a-zA-Z_0-9]* { strcpy(yylval.name, yytext); return FUNCTION; }
 
  /* decimal numbers */
 [0-9]+"."[0-9]*{EXP}? |
