@@ -8,7 +8,7 @@ LDFLAGS = -g -fsanitize=address
 TARGET = sim-gen
 LEXSOURCES = ode-parser.l
 YACCSOURCES = ode-parser.y
-SOURCES = ast.cc matlab.cc
+SOURCES = main.cc ast.cc
 
 BUILD_DIR = build
 

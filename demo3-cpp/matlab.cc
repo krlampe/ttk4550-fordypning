@@ -18,7 +18,7 @@ static void make_matlab_AST(ast_node *root);
 */
 static void print_matlab_AST(ast_node *root, FILE *out);
 
-void matlab_generate(FILE *out) {
+void matlab::generate(FILE *out) {
   int nr_of_equations = symbol_table_get_length();
 
   /* Heading */
@@ -111,12 +111,6 @@ static void print_matlab_AST(ast_node *root, FILE *out) {
 		break;
 	case '+':
 	case '-':
-		fprintf(out, "%s","(");
-		print_matlab_AST(root->left, out);
-		fprintf(out, "%c", root->nodetype);
-		print_matlab_AST(root->right, out);
-		fprintf(out, "%s",")");
-		break;
 	case '*':
 	case '/':
 	case '^':

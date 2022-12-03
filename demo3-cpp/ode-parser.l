@@ -39,7 +39,7 @@ EXP ([Ee][-+]?[0-9]+)
 
  /* decimal numbers */
 [0-9]+"."[0-9]*{EXP}? |
-"."?[0-9]+{EXP}? { yylval.name = strdup(yytext); return COEFFICIENT; }
+"."?[0-9]+{EXP}? { yylval.number = atof(yytext); return COEFFICIENT; }
 
 "//".*  { /* ignore comments */ }
 

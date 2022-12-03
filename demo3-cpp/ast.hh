@@ -5,63 +5,112 @@
 #ifndef AST_H
 #define AST_H
 
-/*
-* Node types of the Abstract syntax tree
-* Binary operators: + - * / ^
-* = - Equation
-* M - Unary minus
-* A - Absolute value
-* C - Built-in function call
-*
-* Leaf node types
-* F - Function symbol
-* D - Derivative of a function
-* T - Independent variable t
-* B - Built-in function symbol
-* N - Number
-*/
+#include <stdio.h>
+#include <string>
+#include <vector>
 
-/* Nodes in the abstract syntax tree */
-typedef struct ast_node ast_node;
-struct ast_node {
-	char nodetype; /* Equation, operator, M, A or C */
-	ast_node *left;
-	ast_node *right;
+struct AST {
+  virtual ~AST() {}
+  virtual void symbol_check() const = 0;
+  virtual void print(FILE *out) const = 0;
 };
 
-typedef struct {
-  char nodetype; /* type F, D, T, or B */
-  char *name;
-} ast_symbol;
+struct AstNumber : public AST {
+  double value;
 
-typedef struct  {
-  char nodetype; /* type N */
-  char *numeral;
-} ast_number;
+  AstNumber(double v) : value{v} {}
 
-ast_node *new_ast_node(char nodetype, ast_node *left, ast_node *right);
-ast_node *new_ast_symbol(char nodetype, char *name);
-ast_node *new_ast_numeral(char *name);
-void ast_free(ast_node *root);
+  void symbol_check() const;
+  void print(FILE *out) const;
+};
 
-/* Traverse an AST, writing to an output stream */
-void ast_print(ast_node *root, FILE *out);
+// Symbol defined by equation
+struct AstSymbol : public AST {
+  std::string name;
 
-/* Symbol table */
-typedef struct {
+  AstSymbol(std::string n) : name{n} {}
+
+  void symbol_check() const;
+  void print(FILE *out) const;
+};
+
+// Variable/parameter not defined by equation
+struct AstVariable : public AST {
+  std::string name;
+
+  AstVariable(std::string n) : name{n} {}
+
+  void symbol_check() const;
+  void print(FILE *out) const;
+};
+
+struct BinaryOperator : public AST {
+  char operat;
+  AST *left;
+  AST *right;
+
+  BinaryOperator(char op, AST *l, AST *r) : operat{op}, left{l}, right{r} {}
+  ~BinaryOperator() { delete left; delete right; }
+
+  void symbol_check() const;
+  void print(FILE *out) const;
+};
+
+struct UnaryOperator : public AST {
+  char operat;
+  AST *operand;
+
+  UnaryOperator(char op, AST *oprnd) : operat{op}, operand{oprnd} {}
+  ~UnaryOperator() { delete operand; }
+
+  void symbol_check() const;
+  void print(FILE *out) const;
+};
+
+struct BuiltInFunc : public AST {
+  std::string name;
+  AST *argument;
+
+  BuiltInFunc(std::string n, AST *a) : name{n}, argument{a} {}
+  ~BuiltInFunc() { delete argument; }
+
+  void symbol_check() const;
+  void print(FILE *out) const;
+};
+
+// Symbols in the symbol table
+struct Symbol {
+  std::string name;
   int index;
-  char *name;
-  ast_node *ast_root;
-} symbol;
+  AST *equation;
+};
 
-extern symbol symbol_table[];
+/**
+ * Symbol table as a Singleton: a single instance with a global access point through get_instance().
+ * Stores the ASTs of all the differential equations together with the symbols they define.
+ * The index of each symbol corresponds to its index in the system of equations (using 0-based indexing).
+ */
+class SymbolTable {
+public:
+  static SymbolTable *get_instance(); // returns the signleton instance, and constructs it if it does not exist
 
-int symbol_table_get_length(void);
-void symbol_table_add(char *name, ast_node *ast_root);
-void symbol_table_free(void);
-void symbol_table_print(void);
+  Symbol& get_symbol(std::string name);
+  int find_symbol(std::string name) const; // return the index of a symbol if it is defined, -1 else
+  void add_symbol(std::string name, AST *equation); // makes a new entry in the symbol table
+  void free(); // deletes all the ASTs and clears the table. The AST destructos frees every node recursively
 
-/* Return symbol pointer if it exists, NULL otherwise */
-symbol *symbol_table_lookup(char *name);
+  void symbol_check() const; // check that all symbols used in equations are defined
+  void print_symbols() const; // (debugging tool) prints all the symbol names to stdout
+
+  SymbolTable(const SymbolTable&) = delete; // prevent copying
+  SymbolTable& operator=(const SymbolTable&) = delete;
+
+private:
+  // Private constructor and static instance to restrict access.
+  SymbolTable() {};
+  static SymbolTable *singleton;
+
+  std::vector<Symbol> symbols; // the table of symbols
+};
 
 #endif /* AST_H */
