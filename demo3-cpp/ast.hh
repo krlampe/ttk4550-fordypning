@@ -9,10 +9,28 @@
 #include <string>
 #include <vector>
 
+struct AstNumber;
+struct AstSymbol;
+struct AstVariable;
+struct BinaryOperator;
+struct UnaryOperator;
+struct BuiltInFunc;
+
+class AstVisitor {
+public:
+  virtual void visit(AstNumber *node) = 0;
+  virtual void visit(AstSymbol *node) = 0;
+  virtual void visit(AstVariable *node) = 0;
+  virtual void visit(BinaryOperator *node) = 0;
+  virtual void visit(UnaryOperator *node) = 0;
+  virtual void visit(BuiltInFunc *node) = 0;
+};
+
 struct AST {
   virtual ~AST() {}
   virtual void symbol_check() const = 0;
   virtual void print(FILE *out) const = 0;
+  virtual void accept(AstVisitor *visitor) = 0;
 };
 
 struct AstNumber : public AST {
@@ -22,6 +40,8 @@ struct AstNumber : public AST {
 
   void symbol_check() const;
   void print(FILE *out) const;
+
+  void accept(AstVisitor *visitor) { visitor->visit(this); };
 };
 
 // Symbol defined by equation
@@ -32,6 +52,8 @@ struct AstSymbol : public AST {
 
   void symbol_check() const;
   void print(FILE *out) const;
+
+  void accept(AstVisitor *visitor) { visitor->visit(this); };
 };
 
 // Variable/parameter not defined by equation
@@ -42,6 +64,8 @@ struct AstVariable : public AST {
 
   void symbol_check() const;
   void print(FILE *out) const;
+  
+  void accept(AstVisitor *visitor) { visitor->visit(this); };
 };
 
 struct BinaryOperator : public AST {
@@ -54,6 +78,8 @@ struct BinaryOperator : public AST {
 
   void symbol_check() const;
   void print(FILE *out) const;
+
+  void accept(AstVisitor *visitor) { visitor->visit(this); };
 };
 
 struct UnaryOperator : public AST {
@@ -65,6 +91,8 @@ struct UnaryOperator : public AST {
 
   void symbol_check() const;
   void print(FILE *out) const;
+
+  void accept(AstVisitor *visitor) { visitor->visit(this); };
 };
 
 struct BuiltInFunc : public AST {
@@ -76,6 +104,8 @@ struct BuiltInFunc : public AST {
 
   void symbol_check() const;
   void print(FILE *out) const;
+
+  void accept(AstVisitor *visitor) { visitor->visit(this); };
 };
 
 // Symbols in the symbol table
@@ -94,8 +124,11 @@ class SymbolTable {
 public:
   static SymbolTable *get_instance(); // returns the signleton instance, and constructs it if it does not exist
 
-  Symbol& get_symbol(std::string name);
-  int find_symbol(std::string name) const; // return the index of a symbol if it is defined, -1 else
+  const Symbol& get_symbol(std::string name) const;
+  const std::vector<Symbol>& get_symbols() const { return symbols; }
+  int get_nr_of_equations() const { return nr_of_equations; }
+
+  int find_symbol(std::string name) const; // returns the index of a symbol if it is defined, -1 else
   void add_symbol(std::string name, AST *equation); // makes a new entry in the symbol table
   void free(); // deletes all the ASTs and clears the table. The AST destructos frees every node recursively
 
@@ -111,6 +144,7 @@ private:
   static SymbolTable *singleton;
 
   std::vector<Symbol> symbols; // the table of symbols
+  int nr_of_equations = 0;
 };
 
 #endif /* AST_H */

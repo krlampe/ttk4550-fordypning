@@ -19,7 +19,7 @@ SymbolTable *SymbolTable::get_instance() {
 	return singleton;
 }
 
-Symbol& SymbolTable::get_symbol(std::string name) {
+const Symbol& SymbolTable::get_symbol(std::string name) const {
 	for (auto& sym : symbols) {
 		if (sym.name == name) {
 			return sym;
@@ -43,6 +43,7 @@ void SymbolTable::add_symbol(std::string name, AST *equation) {
 	}
 	int index = symbols.size();
 	symbols.push_back(Symbol{name, index, equation});
+	++nr_of_equations;
 }
 
 void SymbolTable::free() {
@@ -50,6 +51,7 @@ void SymbolTable::free() {
 		delete sym.equation;
 	}
 	symbols.clear();
+	nr_of_equations = 0;
 }
 
 void SymbolTable::symbol_check() const {

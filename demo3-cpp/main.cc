@@ -31,12 +31,9 @@ int main(int argc, char *argv[]) {
 
     yyparse();
 
-    // matlab::generate(outputfile);
+    Matlab::generate(outputfile);
 
-    SymbolTable *symbol_table = SymbolTable::get_instance();
-    symbol_table->symbol_check();
-    symbol_table->print_symbols();
-    symbol_table->free();
+    SymbolTable::get_instance()->free();
 
     fclose(yyin);
     fclose(outputfile);

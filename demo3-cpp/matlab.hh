@@ -3,13 +3,12 @@
 
 #include <stdio.h>
 
-namespace matlab {
 /**
  * Generate a matlab simulator to the file out.
- * Uses the symbol table with equations (ASTs) defined in "ast.h".
+ * Uses the symbol table with equations (ASTs) defined in "ast.hh".
 */
-void generate(FILE *out);
+namespace Matlab {
+  void generate(FILE *outputfile);
 }
-
 
 #endif /* MATLAB_H */
