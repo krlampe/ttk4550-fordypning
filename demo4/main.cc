@@ -11,16 +11,16 @@ extern FILE *yyin;
 
 int main(int argc, char *argv[]) {
   try {
-    CodeGenerator *code_generator = nullptr;
+    void (*strategy)(FILE *outputfile);
 
     std::string mode = "matlab";
     if (argc > 1) {
       mode = argv[1];
     }
     if (mode == "matlab") {
-      code_generator = new MatlabGenerator();
+      strategy = &CodeGenerator::generate_matlab;
     } else if (mode == "latex") {
-      code_generator = new MatlabGenerator();
+      strategy = &CodeGenerator::generate_latex;
     } else {
       throw std::runtime_error("no mode specified");
     }
@@ -50,8 +50,9 @@ int main(int argc, char *argv[]) {
 
     yyparse();
 
-    (*code_generator)(outputfile);
-    delete code_generator;
+    SymbolTable::get_instance()->symbol_check();
+
+    strategy(outputfile);
 
     SymbolTable::get_instance()->free();
 

@@ -83,34 +83,35 @@ void AstVariable::print(FILE *out) const {
 }
 
 void BinaryOperator::print(FILE *out) const {
-		switch (operat){
-		case '+':
-		case '-':
-			fprintf(out, "%c",'(');
-			left->print(out);
-			fprintf(out, " %c ", operat); // spaces around
-			right->print(out);
-			fprintf(out, "%c",')');
-			break;
-		case '*':
-		case '/':
-		case '^':
-			fprintf(out, "%c",'(');
-			left->print(out);
-			fprintf(out, "%c", operat); // without spaces around
-			right->print(out);
-			fprintf(out, "%c",')');
-			break;
-		default:
-			fprintf(stderr, "Bad operator: %c\n", operat);
-			break;
-		}
+	switch (operat){
+	case '+':
+	case '-':
+		fprintf(out, "%c",'(');
+		left->print(out);
+		fprintf(out, " %c ", operat); // spaces around
+		right->print(out);
+		fprintf(out, "%c",')');
+		break;
+	case '*':
+	case '/':
+	case '^':
+		fprintf(out, "%c",'(');
+		left->print(out);
+		fprintf(out, "%c", operat); // without spaces around
+		right->print(out);
+		fprintf(out, "%c",')');
+		break;
+	default:
+		fprintf(stderr, "Bad operator: %c\n", operat);
+		break;
+	}
 }
 
 void UnaryOperator::print(FILE *out) const {
 	if (operat == 'M') {
-		fprintf(out, "%s","-");
+		fputs("(-", out);
 		operand->print(out);
+    fputs(")", out);
 	}
 	else if (operat == 'A') {
 		fprintf(out, "%c",'|');

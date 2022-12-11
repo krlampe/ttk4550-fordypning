@@ -3,28 +3,20 @@
 
 #include <stdio.h>
 
-class CodeGenerator {
-public:
-  virtual ~CodeGenerator() {}
-  virtual void operator()(FILE *outputfile) const = 0;
-};
+namespace CodeGenerator {
 
 /**
  * Generate a matlab simulator to the file out.
  * Uses the symbol table with equations (ASTs) defined in "ast.hh".
 */
-class MatlabGenerator : public CodeGenerator {
-public:
-  void operator()(FILE *outputfile) const override;
-};
+void generate_matlab(FILE *outputfile);
 
 /**
  * Generate Latex equations to the file out.
  * Uses the symbol table with equations (ASTs) defined in "ast.hh".
 */
-class LatexGenerator : public CodeGenerator {
-public:
-  void operator()(FILE *outputfile) const override;
-};
+void generate_latex(FILE *outputfile);
+
+}
 
 #endif /* STRATEGY_H */
