@@ -12,8 +12,9 @@ SOURCES = main.cc ast.cc matlab.cc
 
 BUILD_DIR = build
 
-SOURCES += $(LEXSOURCES:.l=.lex.c) $(YACCSOURCES:.y=.tab.c)
-OBJS = $(SOURCES:%.c=$(BUILD_DIR)/%.o)
+SOURCES += $(LEXSOURCES:.l=.lex.cc) $(YACCSOURCES:.y=.tab.cc)
+OBJS := $(SOURCES:%.c=$(BUILD_DIR)/%.o)
+OBJS := $(OBJS:%.cc=$(BUILD_DIR)/%.o)
 
 default: $(TARGET)
 
@@ -27,6 +28,9 @@ $(TARGET): $(OBJS)
 	$(LEX) -o $@ $<
 
 $(BUILD_DIR)/%.o: %.c | $(BUILD_DIR)
+	$(CC) -c $< -o $@ $(CFLAGS)
+
+$(BUILD_DIR)/%.o: %.cc | $(BUILD_DIR)
 	$(CC) -c $< -o $@ $(CFLAGS)
 
 $(BUILD_DIR):

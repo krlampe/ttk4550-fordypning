@@ -72,8 +72,9 @@ void ast_print(ast_node *root, FILE *out) {
 		fprintf(out, "%s",")");
 		break;
 	case 'M':
-		fprintf(out, "%s","-");
+		fputs("(-", out);
 		ast_print(root->left, out);
+    fputs(")", out);
 		break;
 	case 'A':
 		fprintf(out, "%s","|");

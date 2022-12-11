@@ -66,8 +66,9 @@ void ast_print(ast_node *root) {
 		printf("%s",")");
 		break;
 	case 'M':
-		printf("%s","-");
+		printf("(%s","-");
 		ast_print(root->left);
+		printf("%s",")");
 		break;
 	case 'A':
 		printf("%s","|");

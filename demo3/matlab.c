@@ -121,8 +121,9 @@ static void print_matlab_AST(ast_node *root, FILE *out) {
 		fprintf(out, "%s",")");
 		break;
 	case 'M':
-		fprintf(out, "%s","-");
+		fputs("(-", out);
 		print_matlab_AST(root->left, out);
+    fputs(")", out);
 		break;
 	case 'A':
 		fprintf(out, "%s","abs(");
