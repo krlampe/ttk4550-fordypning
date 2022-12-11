@@ -38,7 +38,7 @@ private:
   FILE *out;
 };
 
-void Matlab::generate(FILE *out) {
+void MatlabGenerator::operator()(FILE *out) const {
   SymbolTable *symbol_table = SymbolTable::get_instance();
   symbol_table->symbol_check();
 
@@ -51,18 +51,18 @@ void Matlab::generate(FILE *out) {
   }
 
   /* Modify all the ASTs */
-  MatlabPreprocessor modify_visitor{};
   for (const auto& sym : symbol_table->get_symbols()) {
+    MatlabPreprocessor modify_visitor{};
     sym.equation->accept(&modify_visitor);
   }
 
   /*
-  Print matlab formatet equations:
+  Print matlab formated equations:
       dydt = @(t, y) [<equations>];
   */
-  MatlabPrinter print_visitor{out};
   fputs("\ndydt = @(t, y) [", out);
   for (const auto& sym : symbol_table->get_symbols()) {
+    MatlabPrinter print_visitor{out};
     sym.equation->accept(&print_visitor);
     fputs(";", out);
   }

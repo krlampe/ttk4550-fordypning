@@ -1,5 +1,7 @@
 #include <stdio.h>
+#include <string>
 #include <exception>
+#include <stdexcept>
 #include "ast.hh"
 #include "strategy.hh"
 
@@ -9,9 +11,23 @@ extern FILE *yyin;
 
 int main(int argc, char *argv[]) {
   try {
-    const char *inputfile_name = "ode.txt";
+    CodeGenerator *code_generator = nullptr;
+
+    std::string mode = "matlab";
     if (argc > 1) {
-      inputfile_name = argv[1];
+      mode = argv[1];
+    }
+    if (mode == "matlab") {
+      code_generator = new MatlabGenerator();
+    } else if (mode == "latex") {
+      code_generator = new MatlabGenerator();
+    } else {
+      throw std::runtime_error("no mode specified");
+    }
+
+    const char *inputfile_name = "ode.txt";
+    if (argc > 2) {
+      inputfile_name = argv[2];
     }
     yyin = fopen(inputfile_name, "r");
     if(!yyin) {
@@ -20,8 +36,11 @@ int main(int argc, char *argv[]) {
     }
 
     const char *outputfile_name = "ode_sim.m";
-    if (argc > 2) {
-      outputfile_name = argv[2];
+    if (mode == "latex") {
+      outputfile_name = "ode.tex";
+    }
+    if (argc > 3) {
+      outputfile_name = argv[3];
     }
     FILE *outputfile = fopen(outputfile_name, "w");
     if(!outputfile) {
@@ -31,7 +50,8 @@ int main(int argc, char *argv[]) {
 
     yyparse();
 
-    Matlab::generate(outputfile);
+    (*code_generator)(outputfile);
+    delete code_generator;
 
     SymbolTable::get_instance()->free();
 
