@@ -5,8 +5,9 @@ sim-gen
 # Input file
 ode.txt
 
-# Generated matlab files
+# Generated files
 *.m
+*.tex
 
 # Lex and yacc generated files
 *.lex.c

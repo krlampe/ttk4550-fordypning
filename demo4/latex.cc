@@ -5,10 +5,14 @@
 
 /**
  * Print RHS of differential equations for latex code by visiting ASTs.
+ * Pretty printing with minimal usage of parentheses.
+ * One simplification: Always use parentheses around unary minus expressions.
+ * Thus, only BinaryOperators need extra parentheses.
+ * With some more effort, unary minus could have been handled case by case.
  */
-class LatexPrinter : public AstVisitor {
+class LatexPrettyPrinter : public AstVisitor {
 public:
-  LatexPrinter(FILE *outputfile) : out{outputfile} {}
+  LatexPrettyPrinter(FILE *outputfile) : out{outputfile} {}
 
   void visit(AstNumber *node);
   void visit(AstSymbol *node);
@@ -34,7 +38,7 @@ void CodeGenerator::generate_latex(FILE *out) {
   for (const auto& sym : symbol_table->get_symbols()) {
     fprintf(out, "\t\\dot %s &= ", sym.name.c_str());
 
-    LatexPrinter print_visitor{out};
+    LatexPrettyPrinter print_visitor{out};
     sym.equation->accept(&print_visitor);
     fputs("\\\\\n", out);
   }
@@ -47,43 +51,98 @@ void CodeGenerator::generate_latex(FILE *out) {
 }
 
 
-/* LatexPrinter */
+/* LatexPrettyPrinter */
 
-void LatexPrinter::visit(AstNumber *node) {
+void LatexPrettyPrinter::visit(AstNumber *node) {
 	fprintf(out, "%g", node->value);
 }
 
-void LatexPrinter::visit(AstSymbol *node) {
+void LatexPrettyPrinter::visit(AstSymbol *node) {
 	fprintf(out, "%s", node->name.c_str());
 }
 
-void LatexPrinter::visit(AstVariable *node) {
+void LatexPrettyPrinter::visit(AstVariable *node) {
 	fprintf(out, "%s", node->name.c_str());
 }
 
-void LatexPrinter::visit(BinaryOperator *node) {
+// Looks ahead down the tree to see if extra parentheses are needed
+void LatexPrettyPrinter::visit(BinaryOperator *node) {
   switch (node->operat) {
   case '+':
+    node->left->accept(this);
+    fputs("+", out);
+    node->right->accept(this);
+    break;
+
   case '-':
-    fputs("\\left(", out);
     node->left->accept(this);
-    fprintf(out, "%c", node->operat);
+    fputs("-", out);
+
+    // Minus is not an associative operator, parentheses might be needed to its right
+    if (auto child = dynamic_cast<BinaryOperator*>(node->right)) {
+      if (child->operat == '+' || child->operat == '-') {
+        fputs("\\left(", out);
+        child->accept(this);
+        fputs("\\right)", out);
+        break;
+      }
+    }
     node->right->accept(this);
-    fputs("\\right)", out);
     break;
+
   case '*':
-    node->left->accept(this);
-    node->right->accept(this);
+    // Left operand
+    if (auto child = dynamic_cast<BinaryOperator*>(node->left)) {
+      // Only + and - has lower precedence
+      if (child->operat == '+' || child->operat == '-') {
+        fputs("\\left(", out);
+        child->accept(this);
+        fputs("\\right)", out);
+      } else {
+        child->accept(this);
+      }
+    } else {
+      node->left->accept(this);
+    }
+
+    // Include the * sign only if both operands are numbers.
+    if (dynamic_cast<AstNumber*>(node->left) && dynamic_cast<AstNumber*>(node->right)) {
+        fputs("\\cdot", out);
+    }
+
+    // Right operand
+    if (auto child = dynamic_cast<BinaryOperator*>(node->right)) {
+      if (child->operat == '+' || child->operat == '-') {
+        fputs("\\left(", out);
+        child->accept(this);
+        fputs("\\right)", out);
+      } else {
+        child->accept(this);
+      }
+    } else {
+      node->right->accept(this);
+    }
     break;
+
   case '/':
+    // Fractions are handled by the frac command
     fputs("\\frac{", out);
     node->left->accept(this);
     fputs("}{", out);
     node->right->accept(this);
     fputs("}", out);
     break;
+
   case '^':
-    node->left->accept(this);
+    // Every operator has lower precedence than the exponent
+    if (dynamic_cast<BinaryOperator*>(node->left)) {
+      fputs("\\left(", out);
+      node->left->accept(this);
+      fputs("\\right)", out);
+    } else {
+      node->left->accept(this);
+    }
+    // Superscript for the exponent, no parentheses
     fputs("^{", out);
     node->right->accept(this);
     fputs("}", out);
@@ -93,20 +152,34 @@ void LatexPrinter::visit(BinaryOperator *node) {
 	}
 }
 
-void LatexPrinter::visit(UnaryOperator *node) {
+void LatexPrettyPrinter::visit(UnaryOperator *node) {
 	if (node->operat == 'M') {
-		fputs("\\left(-", out);
+    // Use {} to force unary minus in LaTeX
+		fputs("\\left({-", out);
+    if (auto child = dynamic_cast<BinaryOperator*>(node->operand)) {
+      // Only the exponent has higher precedence than unary minus.
+      if (child->operat != '^') {
+        fputs("\\left(", out);
+        child->accept(this);
+        fputs("\\right)", out);
+        fputs("}\\right)", out);
+        return;
+      }
+    }
 		node->operand->accept(this);
-    fputs("\\right)", out);
+    fputs("}\\right)", out);
+    return;
 	}
-	else if (node->operat == 'A') {
+
+  // Absolute value
+	if (node->operat == 'A') {
 		fprintf(out, "%s","\\left|");
 		node->operand->accept(this);
 		fprintf(out, "%s","\\right|");
 	}
 }
 
-void LatexPrinter::visit(BuiltInFunc *node) {
+void LatexPrettyPrinter::visit(BuiltInFunc *node) {
   if (node->name == "sqrt") {
     fputs("\\sqrt{", out);
     node->argument->accept(this);
@@ -116,7 +189,8 @@ void LatexPrinter::visit(BuiltInFunc *node) {
     node->argument->accept(this);
     fputs("}", out);
   } else {
-    fprintf(out, "\\%s", node->name.c_str()); // Backslash in front of sin and log etc.
+    // Backslash in front of sin and log, etc.
+    fprintf(out, "\\%s", node->name.c_str());
     fputs("(", out);
     node->argument->accept(this);
     fputs(")", out);

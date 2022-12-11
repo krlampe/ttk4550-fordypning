@@ -12,7 +12,7 @@ SOURCES = main.cc ast.cc matlab.cc latex.cc
 
 BUILD_DIR = build
 
-SOURCES += $(LEXSOURCES:.l=.lex.cc) $(YACCSOURCES:.y=.tab.cc)
+SOURCES += $(LEXSOURCES:.l=.lex.c) $(YACCSOURCES:.y=.tab.c)
 OBJS := $(SOURCES:%.c=$(BUILD_DIR)/%.o)
 OBJS := $(OBJS:%.cc=$(BUILD_DIR)/%.o)
 
