@@ -4,10 +4,13 @@
 #include <stdexcept>
 #include "ast.hh"
 #include "strategy.hh"
+#include "dox.hh"
 
-int yyparse(void);
-void yyerror(const char *msg);
-extern FILE *yyin;
+int odeparse(void);
+extern FILE *odein;
+
+int doxparse(void);
+extern FILE *doxin;
 
 int main(int argc, char *argv[]) {
   try {
@@ -25,22 +28,12 @@ int main(int argc, char *argv[]) {
       throw std::runtime_error("no mode specified");
     }
 
-    const char *inputfile_name = "ode.txt";
-    if (argc > 2) {
-      inputfile_name = argv[2];
-    }
-    yyin = fopen(inputfile_name, "r");
-    if(!yyin) {
-      perror(inputfile_name);
-      return 1;
-    }
-
     const char *outputfile_name = "ode_sim.m";
     if (mode == "latex") {
       outputfile_name = "ode.tex";
     }
-    if (argc > 3) {
-      outputfile_name = argv[3];
+    if (argc > 2) {
+      outputfile_name = argv[2];
     }
     FILE *outputfile = fopen(outputfile_name, "w");
     if(!outputfile) {
@@ -48,26 +41,47 @@ int main(int argc, char *argv[]) {
       return 1;
     }
 
-    yyparse();
+    const char *ode_inputfile_name = "ode.txt";
+    if (argc > 3) {
+      ode_inputfile_name = argv[3];
+    }
+    odein = fopen(ode_inputfile_name, "r");
+    if(!odein) {
+      perror(ode_inputfile_name);
+      return 1;
+    }
+
+    const char *dox_inputfile_name = "dox.txt";
+    if (argc > 4) {
+      dox_inputfile_name = argv[4];
+    }
+    doxin = fopen(dox_inputfile_name, "r");
+    if(!doxin) {
+      perror(dox_inputfile_name);
+      return 1;
+    }
+
+    odeparse();
+    fclose(odein);
+
+    doxparse();
+    fclose(doxin);
 
     SymbolTable::get_instance()->symbol_check();
-
     strategy(outputfile);
 
     SymbolTable::get_instance()->free();
-
-    fclose(yyin);
     fclose(outputfile);
 
     return 0;
   }
   catch (std::exception& e) {
-    printf("exception: %s\n", e.what());
+    fprintf(stderr, "exception: %s\n", e.what());
     SymbolTable::get_instance()->free();
     return 1;
   }
   catch (...) {
-    puts("Unknown exception");
+    fputs("Unknown exception", stderr);
     SymbolTable::get_instance()->free();
     return 2;
   }

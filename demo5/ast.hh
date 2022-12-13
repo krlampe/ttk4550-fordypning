@@ -1,5 +1,6 @@
 /*
 * Abstract syntax tree and symbol table for ordinary differential equations.
+* The datastructures are built by ode-parser, thus available after odeparse().
 */
 
 #ifndef AST_H

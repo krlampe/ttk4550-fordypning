@@ -1,7 +1,8 @@
 #include <stdio.h>
 #include <string>
-#include "ast.hh"
 #include "strategy.hh"
+#include "ast.hh"
+#include "dox.hh"
 
 /**
  * Modify the AST of an equation so that the names of nodes are matlab compatible.
@@ -68,14 +69,26 @@ void CodeGenerator::generate_matlab(FILE *out) {
   fputs("];\n", out);
 
   /* Initial values */
-  fputs("y_0 = [0", out);
-  for (int i = 1; i < symbol_table->get_nr_of_equations(); i++) {
-    fputs(", 0", out);
+  fputs("y_0 = [ ", out);
+  for (double y0 : dox.initial_values) {
+    fprintf(out, "%g ", y0);
   }
   fputs("];\n", out);
 
+  /* Time interval */
+  fprintf(out, "tspan = [ %g %g ];\n", dox.interval.start, dox.interval.end);
+
+  /* Possible options */
+  if (dox.time_step) {
+    fprintf(out, "options = odeset('InitialStep',%g);\n", dox.time_step);
+  }
+
   /* Integrator */
-  fputs("[t,y] = ode45(dydt, [0 20], y_0);\n", out);
+  if (!dox.time_step) {
+    fprintf(out, "[t,y] = %s(dydt, tspan, y_0);\n", dox.solver.c_str());
+  } else {
+    fprintf(out, "[t,y] = %s(dydt, tspan, y_0, options);\n", dox.solver.c_str());
+  }
 
   /* Plotting */
   fputs(
@@ -84,7 +97,7 @@ void CodeGenerator::generate_matlab(FILE *out) {
     out
   );
   for (int i = 0; i < symbol_table->get_nr_of_equations(); i++) {
-    fprintf(out, "plot(t,y(:,%d),'-o');\n", i+1);
+    fprintf(out, "plot(t,y(:,%d),'%s');\n", i+1, dox.plot_style.c_str());
   }
   fputs(
     "hold off;\n"
@@ -153,16 +166,16 @@ void MatlabPrinter::visit(UnaryOperator *node) {
 		fputs("(-", out);
 		node->operand->accept(this);
     fputs(")", out);
-	}
-	else if (node->operat == 'A') {
-		fprintf(out, "%s","abs(");
+	}	else if (node->operat == 'A') {
+		fputs("abs(", out);
 		node->operand->accept(this);
-		fprintf(out, "%c",')');
+		fputs(")", out);
 	}
 }
 
 void MatlabPrinter::visit(BuiltInFunc *node) {
-  fprintf(out, "%s", node->name.c_str()); // assumes that the input used the same names as matlab for built-ins
+  // assumes that the input uses the same names as matlab for built-ins
+  fprintf(out, "%s", node->name.c_str());
 	fprintf(out, "%s","(");
 	node->argument->accept(this);
 	fprintf(out, "%s",")");

@@ -1,13 +1,14 @@
+%define api.prefix {ode}
+
 %{
 #include <stdio.h>
 #include <stdlib.h>
 #include "ast.hh"
 
-int yylex(void);
-void yyerror(const char *msg);
-extern FILE *yyin;
-extern int yylineno;
-extern char *yytext;
+int odelex(void);
+void odeerror(const char *msg);
+extern int odelineno;
+extern char *odetext;
 %}
 
 %union {
@@ -55,6 +56,6 @@ exp: exp '+' exp          { $$ = new BinaryOperator{'+', $1, $3}; }
 
 %%
 
-void yyerror(const char *msg) {
-  fprintf(stderr, "%d: %s at '%s'\n", yylineno, msg, yytext);
+void odeerror(const char *msg) {
+  fprintf(stderr, "ode line %d: %s at '%s'\n", odelineno, msg, odetext);
 }

@@ -2,8 +2,8 @@
 ode-parser
 sim-gen
 
-# Input file
-ode.txt
+# Input files
+*.txt
 
 # Generated files
 *.m

@@ -1,9 +1,10 @@
+%option prefix="ode"
 %option noyywrap nodefault noinput nounput yylineno
 
 %{
 #include "ode-parser.tab.h"
 #include <string.h>
-void yyerror(const char *msg);
+void odeerror(const char *msg);
 %}
 
 /* float exponent */
@@ -25,21 +26,21 @@ EXP ([Ee][-+]?[0-9]+)
 "'" { return D; }
 
  /* reserved variable  */
-"t" { yylval.name = strdup(yytext); return T; }
+"t" { odelval.name = strdup(yytext); return T; }
 
  /* built-in functions */
 "sqrt" |
 "exp"  |
 "log"  |
 "sin"  |
-"cos"  { yylval.name = strdup(yytext); return CALL; }
+"cos"  { odelval.name = strdup(yytext); return CALL; }
 
  /* symbols */
-[a-zA-Z_][a-zA-Z_0-9]* { yylval.name = strdup(yytext); return FUNCTION; }
+[a-zA-Z_][a-zA-Z_0-9]* { odelval.name = strdup(yytext); return FUNCTION; }
 
  /* decimal numbers */
 [0-9]+"."[0-9]*{EXP}? |
-"."?[0-9]+{EXP}? { yylval.number = atof(yytext); return COEFFICIENT; }
+"."?[0-9]+{EXP}? { odelval.number = atof(yytext); return COEFFICIENT; }
 
 "//".*  { /* ignore comments */ }
 
@@ -49,5 +50,5 @@ EXP ([Ee][-+]?[0-9]+)
 
 [ \t]	{ /* ignore whitespace */ }
 
-.	{ yyerror("Unknown character"); }
+.	{ odeerror("Unknown character"); }
 %%

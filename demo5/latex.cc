@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <string>
-#include "ast.hh"
 #include "strategy.hh"
+#include "ast.hh"
 
 /**
  * Print RHS of differential equations for latex code by visiting ASTs.
@@ -157,8 +157,8 @@ void LatexPrettyPrinter::visit(UnaryOperator *node) {
     // Use {} to force unary minus in LaTeX
 		fputs("\\left({-", out);
     if (auto child = dynamic_cast<BinaryOperator*>(node->operand)) {
-      // Only the exponent has higher precedence than unary minus.
-      if (child->operat != '^') {
+      // Only + and - needs extra parentheses
+      if (child->operat == '+' || child->operat == '-') {
         fputs("\\left(", out);
         child->accept(this);
         fputs("\\right)", out);

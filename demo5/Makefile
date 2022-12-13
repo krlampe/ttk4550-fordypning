@@ -6,8 +6,8 @@ CFLAGS = -Wall -g -fsanitize=address
 LDFLAGS = -g -fsanitize=address
 
 TARGET = sim-gen
-LEXSOURCES = ode-parser.l
-YACCSOURCES = ode-parser.y
+LEXSOURCES = ode-parser.l dox-parser.l
+YACCSOURCES = ode-parser.y dox-parser.y
 SOURCES = main.cc ast.cc matlab.cc latex.cc
 
 BUILD_DIR = build
@@ -22,7 +22,7 @@ $(TARGET): $(OBJS)
 	$(CC) $(OBJS) -o $@ $(LDFLAGS)
 
 %.tab.c %.tab.h: %.y
-	$(YACC) -d $<
+	$(YACC) -d -b $* $<
 
 %.lex.c: %.l %.tab.h
 	$(LEX) -o $@ $<
