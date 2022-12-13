@@ -5,7 +5,6 @@
 
 int yylex(void);
 void yyerror(const char *msg);
-extern FILE *yyin;
 extern int yylineno;
 extern char *yytext;
 %}
@@ -17,11 +16,11 @@ extern char *yytext;
 }
 
 %token <name> FUNCTION
-%token <name> T
 %token <number> COEFFICIENT
+%token <name> CALL
+%token T
 %token D
 %token EOL
-%token <name> CALL
 
 %left '+' '-'
 %left '*' '/'
@@ -48,8 +47,8 @@ exp: exp '+' exp          { $$ = new BinaryOperator{'+', $1, $3}; }
    | '|' exp '|'          { $$ = new UnaryOperator{'A', $2}; }
    | '(' exp ')'          { $$ = $2; }
    | COEFFICIENT          { $$ = new AstNumber{$1}; }
+   | T                    { $$ = new AstVariable{"t"}; }
    | FUNCTION             { $$ = new AstSymbol{$1}; free($1); }
-   | T                    { $$ = new AstVariable{"t"}; free($1); }
    | CALL '(' exp ')'     { $$ = new BuiltInFunc{$1, $3}; free($1); }
    ;
 

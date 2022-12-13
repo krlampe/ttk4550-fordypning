@@ -6,7 +6,6 @@
 #include "strategy.hh"
 
 int yyparse(void);
-void yyerror(const char *msg);
 extern FILE *yyin;
 
 int main(int argc, char *argv[]) {
@@ -62,12 +61,12 @@ int main(int argc, char *argv[]) {
     return 0;
   }
   catch (std::exception& e) {
-    printf("exception: %s\n", e.what());
+    fprintf(stderr, "exception: %s\n", e.what());
     SymbolTable::get_instance()->free();
     return 1;
   }
   catch (...) {
-    puts("Unknown exception");
+    fputs("Unknown exception", stderr);
     SymbolTable::get_instance()->free();
     return 2;
   }

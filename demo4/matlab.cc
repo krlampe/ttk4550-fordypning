@@ -162,7 +162,8 @@ void MatlabPrinter::visit(UnaryOperator *node) {
 }
 
 void MatlabPrinter::visit(BuiltInFunc *node) {
-  fprintf(out, "%s", node->name.c_str()); // assumes that the input used the same names as matlab for built-ins
+  // assumes that the input uses the same names as matlab for built-ins
+  fprintf(out, "%s", node->name.c_str());
 	fprintf(out, "%s","(");
 	node->argument->accept(this);
 	fprintf(out, "%s",")");

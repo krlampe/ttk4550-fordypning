@@ -4,10 +4,6 @@
 #include <stdexcept>
 #include "ast.hh"
 
-/* From parser */
-void yyerror(const char *msg);
-
-
 /* Symbol table */
 
 SymbolTable *SymbolTable::singleton = nullptr;
@@ -20,7 +16,7 @@ SymbolTable *SymbolTable::get_instance() {
 }
 
 const Symbol& SymbolTable::get_symbol(std::string name) const {
-	for (auto& sym : symbols) {
+	for (const auto& sym : symbols) {
 		if (sym.name == name) {
 			return sym;
 		}
@@ -29,7 +25,7 @@ const Symbol& SymbolTable::get_symbol(std::string name) const {
 }
 
 int SymbolTable::find_symbol(std::string name) const {
-	for (auto& sym : symbols) {
+	for (const auto& sym : symbols) {
 		if (sym.name == name) {
 			return sym.index;
 		}

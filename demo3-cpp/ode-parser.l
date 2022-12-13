@@ -25,7 +25,7 @@ EXP ([Ee][-+]?[0-9]+)
 "'" { return D; }
 
  /* reserved variable  */
-"t" { yylval.name = strdup(yytext); return T; }
+"t" { return T; }
 
  /* built-in functions */
 "sqrt" |
