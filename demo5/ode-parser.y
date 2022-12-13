@@ -1,3 +1,7 @@
+/*
+* Ordinary Differential Equations (ODE) parser
+*/
+
 %define api.prefix {ode}
 
 %{
@@ -17,12 +21,15 @@ extern char *odetext;
   double number;
 }
 
-%token <name> FUNCTION
-%token <name> T
-%token <number> COEFFICIENT
+%token DECLARATION
+%token <name> PARAMETER
+
+%token <name> SYMBOL
+%token <number> NUMBER
+%token <name> CALL
+%token T
 %token D
 %token EOL
-%token <name> CALL
 
 %left '+' '-'
 %left '*' '/'
@@ -34,7 +41,8 @@ extern char *odetext;
 %%
 eqlist:
 | eqlist EOL
-| eqlist FUNCTION D '=' exp {
+| eqlist DECLARATION paramlist {}
+| eqlist SYMBOL D '=' exp   {
                               SymbolTable::get_instance()->add_symbol($2, $5);
                               free($2);
                             }
@@ -48,12 +56,18 @@ exp: exp '+' exp          { $$ = new BinaryOperator{'+', $1, $3}; }
    | exp '^' exp          { $$ = new BinaryOperator{'^', $1, $3}; }
    | '|' exp '|'          { $$ = new UnaryOperator{'A', $2}; }
    | '(' exp ')'          { $$ = $2; }
-   | COEFFICIENT          { $$ = new AstNumber{$1}; }
-   | FUNCTION             { $$ = new AstSymbol{$1}; free($1); }
-   | T                    { $$ = new AstVariable{"t"}; free($1); }
+   | NUMBER               { $$ = new AstNumber{$1}; }
+   | T                    { $$ = new AstVariable{"t"}; }
+   | SYMBOL               { $$ = new AstSymbol{$1}; free($1); }
+   | PARAMETER            { $$ = new AstVariable{$1}; free($1); }
    | CALL '(' exp ')'     { $$ = new BuiltInFunc{$1, $3}; free($1); }
    ;
 
+paramlist: SYMBOL         { SymbolTable::get_instance()->add_param($1); free($1); }
+| paramlist ',' SYMBOL    { SymbolTable::get_instance()->add_param($3); free($3); }
+| PARAMETER               { free($1); }
+| paramlist ',' PARAMETER { free($3); }
+;
 %%
 
 void odeerror(const char *msg) {

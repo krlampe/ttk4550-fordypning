@@ -2,8 +2,9 @@
 %option noyywrap nodefault noinput nounput yylineno
 
 %{
-#include "ode-parser.tab.h"
 #include <string.h>
+#include "ode-parser.tab.h"
+#include "ast.hh"
 void odeerror(const char *msg);
 %}
 
@@ -20,13 +21,17 @@ EXP ([Ee][-+]?[0-9]+)
 "^" |
 "|" |
 "(" |
-")" { return yytext[0]; }
+")" |
+"," { return yytext[0]; }
 
  /* prime mark for derivatives */
 "'" { return D; }
 
+ /* reserved keyword */
+"params" { return DECLARATION; }
+
  /* reserved variable  */
-"t" { odelval.name = strdup(yytext); return T; }
+"t" { return T; }
 
  /* built-in functions */
 "sqrt" |
@@ -36,11 +41,17 @@ EXP ([Ee][-+]?[0-9]+)
 "cos"  { odelval.name = strdup(yytext); return CALL; }
 
  /* symbols */
-[a-zA-Z_][a-zA-Z_0-9]* { odelval.name = strdup(yytext); return FUNCTION; }
+[a-zA-Z_][a-zA-Z_0-9]*  {
+                          odelval.name = strdup(yytext);
+                          if (SymbolTable::get_instance()->lookup_param(yytext)) {
+                              return PARAMETER;
+                          }
+                          return SYMBOL;
+                        }
 
  /* decimal numbers */
 [0-9]+"."[0-9]*{EXP}? |
-"."?[0-9]+{EXP}? { odelval.number = atof(yytext); return COEFFICIENT; }
+"."?[0-9]+{EXP}? { odelval.number = atof(yytext); return NUMBER; }
 
 "//".*  { /* ignore comments */ }
 

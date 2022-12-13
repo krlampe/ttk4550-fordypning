@@ -3,8 +3,8 @@
 #include <exception>
 #include <stdexcept>
 #include "ast.hh"
-#include "strategy.hh"
 #include "dox.hh"
+#include "strategy.hh"
 
 int odeparse(void);
 extern FILE *odein;

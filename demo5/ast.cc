@@ -4,10 +4,6 @@
 #include <stdexcept>
 #include "ast.hh"
 
-/* From parser */
-void odeerror(const char *msg);
-
-
 /* Symbol table */
 
 SymbolTable *SymbolTable::singleton = nullptr;
@@ -46,18 +42,21 @@ void SymbolTable::add_symbol(std::string name, AST *equation) {
 	++nr_of_equations;
 }
 
+void SymbolTable::symbol_check() const {
+	for (const auto& sym : symbols) {
+		sym.equation->symbol_check();
+	}
+}
+
 void SymbolTable::free() {
 	for (auto& sym : symbols) {
 		delete sym.equation;
 	}
 	symbols.clear();
 	nr_of_equations = 0;
-}
 
-void SymbolTable::symbol_check() const {
-	for (const auto& sym : symbols) {
-		sym.equation->symbol_check();
-	}
+	delete singleton;
+	singleton = nullptr;
 }
 
 void SymbolTable::print_symbols() const {
@@ -67,6 +66,29 @@ void SymbolTable::print_symbols() const {
 	}
 }
 
+void SymbolTable::print_params() const {
+	puts("Parameters:");
+	for (const auto& [name, value] : parameters) {
+		printf("%s = %g\n", name.c_str(), value);
+	}
+}
+
+bool SymbolTable::lookup_param(std::string name) const {
+	try {
+		parameters.at(name);
+		return true;
+	} catch (std::out_of_range&) {
+		return false;
+	}
+}
+
+void SymbolTable::add_param(std::string name) {
+	parameters[name] = 1;
+}
+
+void SymbolTable::set_param(std::string name, double value) {
+	parameters[name] = value;
+}
 
 /* AST nodes' print */
 

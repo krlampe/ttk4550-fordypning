@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <string>
 #include <vector>
+#include <map>
 
 struct AstNumber;
 struct AstSymbol;
@@ -118,8 +119,16 @@ struct Symbol {
 
 /**
  * Symbol table as a Singleton: a single instance with a global access point through get_instance().
+ * 
  * Stores the ASTs of all the differential equations together with the symbols they define.
  * The index of each symbol corresponds to its index in the system of equations (using 0-based indexing).
+ * 
+ * Stores declared parameters by their names with a float value which can be set at a later point.
+ * 
+ * symbol_check() checks that all symbols used in equations are defined. Every name that is not declared
+ * as a parameter is treated as a symbol and must be defined by an AST.
+ * 
+ * free() deletes all the ASTs and resets the singleton. The AST destructos frees every node recursively
  */
 class SymbolTable {
 public:
@@ -130,11 +139,18 @@ public:
   int get_nr_of_equations() const { return nr_of_equations; }
 
   int find_symbol(std::string name) const; // returns the index of a symbol if it is defined, -1 else
-  void add_symbol(std::string name, AST *equation); // makes a new entry in the symbol table
-  void free(); // deletes all the ASTs and clears the table. The AST destructos frees every node recursively
+  void add_symbol(std::string name, AST *equation); // makes a new symbol entry
 
-  void symbol_check() const; // check that all symbols used in equations are defined
+  void symbol_check() const;
+  void free();
+
+  double get_param_value(std::string name) { return parameters[name]; };
+  bool lookup_param(std::string name) const;
+  void add_param(std::string name); // makes a new param entry with default value 1
+  void set_param(std::string name, double value);
+
   void print_symbols() const; // (debugging tool) prints all the symbol names to stdout
+  void print_params() const;  // (debugging tool) prints all the params to stdout
 
   SymbolTable(const SymbolTable&) = delete; // prevent copying
   SymbolTable& operator=(const SymbolTable&) = delete;
@@ -146,6 +162,8 @@ private:
 
   std::vector<Symbol> symbols; // the table of symbols
   int nr_of_equations = 0;
+
+  std::map<std::string, double> parameters; // the table of parameters
 };
 
 #endif /* AST_H */

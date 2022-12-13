@@ -10,7 +10,7 @@
  * matlab matrix y, which is equal to its index in the symbol table plus 1.
  * (Matlab has 1-based indexing.)
  * 
- * Assumes that the every symbol used is defined.
+ * Assumes that every symbol and parameter is defined.
 */
 class MatlabPreprocessor : public AstVisitor {
   void visit(AstNumber *node);
@@ -150,7 +150,11 @@ void MatlabPrinter::visit(AstSymbol *node) {
 }
 
 void MatlabPrinter::visit(AstVariable *node) {
-	fprintf(out, "%s", node->name.c_str());
+  if (SymbolTable::get_instance()->lookup_param(node->name)) {
+    fprintf(out, "%g", SymbolTable::get_instance()->get_param_value(node->name));
+  } else {
+	  fprintf(out, "%s", node->name.c_str());
+  }
 }
 
 void MatlabPrinter::visit(BinaryOperator *node) {

@@ -1,9 +1,14 @@
+/*
+* Design of Experiements (DOX) parser
+*/
+
 %define api.prefix {dox}
 
 %{
 #include <stdio.h>
 #include <stdlib.h>
 #include "dox.hh"
+#include "ast.hh"
 
 int doxlex(void);
 void doxerror(const char *msg);
@@ -33,6 +38,7 @@ DOX dox;
 %%
 statements:
 | statements EOL
+| statements SYMBOL '=' NUMBER { SymbolTable::get_instance()->set_param($2, $4); free($2); }
 | statements SOLVER '=' SYMBOL { dox.solver = $4; free($4); }
 | statements INTERVAL '=' '[' NUMBER NUMBER ']' { dox.interval.start = $5; dox.interval.end = $6; }
 | statements INTERVAL '=' '[' NUMBER ',' NUMBER ']' { dox.interval.start = $5; dox.interval.end = $7; }
