@@ -10,15 +10,20 @@
  * matlab matrix y, which is equal to its index in the symbol table plus 1.
  * (Matlab has 1-based indexing.)
  * 
- * Assumes that every symbol and parameter is defined.
+ * Pruning: If a parameter is set to 0 in dox, all of its multiplications are optimized.
+ * All subtrees mulitplyed by a 0 are deleted and replaced by an AstNumber{0}.
 */
 class MatlabPreprocessor : public AstVisitor {
+public:
   void visit(AstNumber *node);
   void visit(AstSymbol *node);
   void visit(AstVariable *node);
   void visit(BinaryOperator *node);
   void visit(UnaryOperator *node);
   void visit(BuiltInFunc *node);
+
+private:
+  bool prune = false;
 };
 
 /**
@@ -80,7 +85,7 @@ void CodeGenerator::generate_matlab(FILE *out) {
 
   /* Possible options */
   if (dox.time_step) {
-    fprintf(out, "options = odeset('InitialStep',%g);\n", dox.time_step);
+    fprintf(out, "options = odeset('InitialStep', %g);\n", dox.time_step);
   }
 
   /* Integrator */
@@ -123,19 +128,68 @@ void MatlabPreprocessor::visit(AstSymbol *node) {
   node->name = "y(" + std::to_string(sym.index+1) + ")";
 }
 
-void MatlabPreprocessor::visit(AstVariable *node) {}
+void MatlabPreprocessor::visit(AstVariable *node) {
+  if (SymbolTable::get_instance()->lookup_param(node->name)) {
+    if (SymbolTable::get_instance()->get_param_value(node->name) == 0) {
+      prune = true;
+    }
+  }
+}
 
 void MatlabPreprocessor::visit(BinaryOperator *node) {
-  node->left->accept(this);
-  node->right->accept(this);
+  if (node->operat == '*') {
+    // if prune is set, pass it on upwards
+    node->left->accept(this);
+    if (prune) {
+      return;
+    }
+    node->right->accept(this);
+    if (prune) {
+      return;
+    }
+  } else if (node->operat == '/' || node->operat == '^') {
+    // if prune is set by the numerator, pass it on upwards
+    node->left->accept(this);
+    if (prune) {
+      return;
+    }
+    // if prune is set by the denumerator, handle it,
+    // although it could give a divide by zero (user error)
+    node->right->accept(this);
+    if (prune) {
+      delete node->right;
+      node->right = new AstNumber{0};
+      prune = false;
+    }
+  } else { // all other operators always handle the pruning
+    node->left->accept(this);
+    if (prune) {
+      delete node->left;
+      node->left = new AstNumber{0};
+      prune = false;
+    }
+
+    node->right->accept(this);
+    if (prune) {
+      delete node->right;
+      node->right = new AstNumber{0};
+      prune = false;
+    }
+  }
 }
 
 void MatlabPreprocessor::visit(UnaryOperator *node) {
+  // All unary operators (both 'M' and 'abs') pass potenial pruning upwards
   node->operand->accept(this);
 }
 
 void MatlabPreprocessor::visit(BuiltInFunc *node) {
   node->argument->accept(this);
+  if (prune) {
+    delete node->argument;
+    node->argument = new AstNumber{0};
+    prune = false;
+  }
 }
 
 
