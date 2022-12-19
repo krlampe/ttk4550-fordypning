@@ -6,13 +6,13 @@
 namespace CodeGenerator {
 
 /**
- * Generate a matlab simulator to the file out.
+ * Generate a matlab simulator to the file outputfile.
  * Uses the symbol table with equations (ASTs) defined in "ast.hh".
 */
 void generate_matlab(FILE *outputfile);
 
 /**
- * Generate Latex equations to the file out.
+ * Generate Latex equations to the file outputfile.
  * Uses the symbol table with equations (ASTs) defined in "ast.hh".
 */
 void generate_latex(FILE *outputfile);

@@ -7,10 +7,10 @@
 /*
 * Design of Experiements (DOX) data strucuture
 * 
-* Initial values and parameter values are the only required input from
-* the user, the rest have default values. The input from the user is not
-* checked, but assumed to be valid. If no time step is suggested by the user,
-* none is given to the solver, which then will choose itself.
+* Initial values values are the only required input from the user, for
+* the simulator to work, the rest have default values. The input from the user
+* is not checked, but assumed to be valid. If no initial time step is suggested
+* by the user, none is given to the solver, which then will choose ab by itself.
 */
 struct DOX {
   std::string solver = "ode45";
