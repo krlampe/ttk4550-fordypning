@@ -1,4 +1,4 @@
-# ttk4550-fordypning
+# Simulator Generator
 
 TTK4550 Specialization project fall 2022
 
